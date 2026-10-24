@@ -37,7 +37,6 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,21 +61,10 @@ import com.junkfood.seal.ui.component.SealModalBottomSheet
 import com.junkfood.seal.ui.component.SealModalBottomSheetM2Variant
 import com.junkfood.seal.ui.page.download.PlaylistSelectionDialog
 import com.junkfood.seal.ui.page.downloadv2.configure.DownloadDialogViewModel.SelectionState
-import com.junkfood.seal.ui.page.settings.format.AudioQuickSettingsDialog
-import com.junkfood.seal.ui.page.settings.format.VideoQuickSettingsDialog
-import com.junkfood.seal.util.AUDIO_CONVERSION_FORMAT
-import com.junkfood.seal.util.AUDIO_CONVERT
-import com.junkfood.seal.util.AUDIO_FORMAT
-import com.junkfood.seal.util.AUDIO_QUALITY
 import com.junkfood.seal.util.DownloadType.Audio
 import com.junkfood.seal.util.DownloadType.Video
 import com.junkfood.seal.util.DownloadUtil
 import com.junkfood.seal.util.PlaylistResult
-import com.junkfood.seal.util.PreferenceUtil.updateBoolean
-import com.junkfood.seal.util.PreferenceUtil.updateInt
-import com.junkfood.seal.util.USE_CUSTOM_AUDIO_PRESET
-import com.junkfood.seal.util.VIDEO_FORMAT
-import com.junkfood.seal.util.VIDEO_QUALITY
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -87,11 +75,7 @@ fun PlaylistSelectionPage(
     downloader: DownloaderV2 = koinInject(),
     onDismissRequest: () -> Unit = {},
 ) {
-    var preferences by remember {
-        mutableStateOf(DownloadUtil.DownloadPreferences.createFromPreferences())
-    }
-    var showVideoPresetDialog by remember { mutableStateOf(false) }
-    var showAudioPresetDialog by remember { mutableStateOf(false) }
+    val preferences = remember { DownloadUtil.DownloadPreferences.createFromPreferences() }
 
     var taskList by remember { mutableStateOf(emptyList<TaskFactory.TaskWithState>()) }
 
@@ -133,23 +117,11 @@ fun PlaylistSelectionPage(
             contentPadding = PaddingValues(),
             onDismissRequest = onDismissConfigurationSheet,
         ) {
-            ConfigurePagePlaylistVariant(
-                modifier = Modifier,
-                initialDownloadType = Video,
-                preferences = preferences,
-                onPreferencesUpdate = { preferences = it },
-                onPresetEdit = { type ->
-                    when (type) {
-                        Audio -> showAudioPresetDialog = true
-
-                        Video -> showVideoPresetDialog = true
-
-                        else -> {}
-                    }
-                },
-                onDismissRequest = onDismissConfigurationSheet,
-                onDownload = {
-                    val preferences = preferences.copy(extractAudio = it == Audio)
+            SimpleConfigurePage(
+                initialType = Video,
+                onCancel = onDismissConfigurationSheet,
+                onDownload = { type ->
+                    val preferences = preferences.copy(extractAudio = type == Audio)
                     taskList
                         .map { it.copy(task = it.task.copy(preferences = preferences)) }
                         .forEach(downloader::enqueue)
@@ -158,58 +130,6 @@ fun PlaylistSelectionPage(
                 },
             )
         }
-    }
-
-    if (showVideoPresetDialog) {
-        var res by remember(preferences) { mutableIntStateOf(preferences.videoResolution) }
-        var format by remember(preferences) { mutableIntStateOf(preferences.videoFormat) }
-
-        VideoQuickSettingsDialog(
-            videoResolution = res,
-            videoFormatPreference = format,
-            onResolutionSelect = { res = it },
-            onFormatSelect = { format = it },
-            onDismissRequest = { showVideoPresetDialog = false },
-            onSave = {
-                VIDEO_FORMAT.updateInt(format)
-                VIDEO_QUALITY.updateInt(res)
-                preferences = DownloadUtil.DownloadPreferences.createFromPreferences()
-            },
-        )
-    }
-
-    if (showAudioPresetDialog) {
-        var quality by remember(preferences) { mutableIntStateOf(preferences.audioQuality) }
-        var customPreset by
-            remember(preferences) { mutableStateOf(preferences.useCustomAudioPreset) }
-        var conversionFmt by
-            remember(preferences) { mutableIntStateOf(preferences.audioConvertFormat) }
-        var convertAudio by remember(preferences) { mutableStateOf(preferences.convertAudio) }
-        var preferredFormat by remember(preferences) { mutableIntStateOf(preferences.audioFormat) }
-
-        AudioQuickSettingsDialog(
-            modifier = Modifier,
-            preferences = preferences,
-            audioQuality = quality,
-            onQualitySelect = { quality = it },
-            useCustomAudioPreset = customPreset,
-            onCustomPresetToggle = { customPreset = it },
-            convertAudio = convertAudio,
-            onConvertToggled = { convertAudio = it },
-            conversionFormat = conversionFmt,
-            onConversionSelect = { conversionFmt = it },
-            preferredFormat = preferredFormat,
-            onPreferredSelect = { preferredFormat = it },
-            onDismissRequest = { showAudioPresetDialog = false },
-            onSave = {
-                AUDIO_QUALITY.updateInt(quality)
-                USE_CUSTOM_AUDIO_PRESET.updateBoolean(customPreset)
-                AUDIO_CONVERSION_FORMAT.updateInt(conversionFmt)
-                AUDIO_CONVERT.updateBoolean(convertAudio)
-                AUDIO_FORMAT.updateInt(preferredFormat)
-                preferences = DownloadUtil.DownloadPreferences.createFromPreferences()
-            },
-        )
     }
 }
 

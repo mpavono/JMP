@@ -17,6 +17,8 @@
     <string name="download_error_msg">Could not download file</string>
     <string name="download_start_msg">Download \"%1$s\"</string>
     <string name="fetch_info_error_msg">Could not fetch video info</string>
+    <string name="extraction_error_hint">The site may have changed its page. Updating yt-dlp usually fixes this.</string>
+    <string name="update_ytdlp_and_retry">Update yt-dlp and retry</string>
     <string name="general_settings">General</string>
     <string name="language">Display language</string>
     <string name="language_settings">Set display language</string>

@@ -46,6 +46,13 @@ import java.util.Locale
 
 object DownloadUtil {
 
+    /**
+     * Retries and socket timeout (seconds) used when only fetching video/playlist info. They were
+     * 1 and 5, which produced false failures on slow mobile connections with sites like TikTok.
+     */
+    private const val INFO_RETRIES = "3"
+    private const val INFO_SOCKET_TIMEOUT = "15"
+
     object CookieScheme {
         const val NAME = "name"
         const val VALUE = "value"
@@ -96,8 +103,8 @@ object DownloadUtil {
                 addOption("--flat-playlist")
                 addOption("--dump-single-json")
                 addOption("-o", BASENAME)
-                addOption("-R", "1")
-                addOption("--socket-timeout", "5")
+                addOption("-R", INFO_RETRIES)
+                addOption("--socket-timeout", INFO_SOCKET_TIMEOUT)
                 downloadPreferences.run {
                     if (extractAudio) {
                         addOption("-x")
@@ -178,9 +185,9 @@ object DownloadUtil {
                     } else {
                         addOption("--dump-single-json")
                     }
-                    addOption("-R", "1")
+                    addOption("-R", INFO_RETRIES)
                     addOption("--no-playlist")
-                    addOption("--socket-timeout", "5")
+                    addOption("--socket-timeout", INFO_SOCKET_TIMEOUT)
                 }
             return getVideoInfo(request, taskKey)
         }

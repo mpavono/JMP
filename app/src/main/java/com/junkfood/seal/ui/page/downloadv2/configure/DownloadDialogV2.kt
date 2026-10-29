@@ -79,7 +79,10 @@ import com.junkfood.seal.util.PreferenceUtil
 import com.junkfood.seal.util.PreferenceUtil.getBoolean
 import com.junkfood.seal.util.PreferenceUtil.updateBoolean
 import com.junkfood.seal.util.ToastUtil
+import com.junkfood.seal.util.UpdateUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 private fun DownloadType.label(): String =
@@ -150,6 +153,10 @@ fun DownloadDialog(
 private fun ErrorPage(modifier: Modifier = Modifier, state: Error, onActionPost: (Action) -> Unit) {
     val view = LocalView.current
     val clipboardManager = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
+    var updating by remember { mutableStateOf(false) }
+    val isExtractionError =
+        state.throwable.message?.contains("Unable to extract", ignoreCase = true) == true
     val url =
         state.action.run {
             when (this) {
@@ -182,6 +189,29 @@ private fun ErrorPage(modifier: Modifier = Modifier, state: Error, onActionPost:
             maxLines = 20,
             overflow = TextOverflow.Clip,
         )
+
+        if (isExtractionError) {
+            Text(
+                text = stringResource(R.string.extraction_error_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 12.dp),
+            )
+            Button(
+                enabled = !updating,
+                onClick = {
+                    updating = true
+                    scope.launch {
+                        runCatching { withContext(Dispatchers.IO) { UpdateUtil.updateYtDlp() } }
+                        updating = false
+                        onActionPost(state.action)
+                    }
+                },
+                modifier = Modifier.padding(bottom = 8.dp),
+            ) {
+                Text(stringResource(R.string.update_ytdlp_and_retry))
+            }
+        }
 
         Row(modifier = Modifier) {
             FilledTonalButton(onClick = { onActionPost(state.action) }) { Text("Retry") }

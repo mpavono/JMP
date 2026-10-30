@@ -226,7 +226,7 @@ private val IntPreferenceDefaults =
         CONCURRENT to 8,
         LANGUAGE to SYSTEM_DEFAULT,
         PALETTE_STYLE to 0,
-        DARK_THEME_VALUE to DarkThemePreference.FOLLOW_SYSTEM,
+        DARK_THEME_VALUE to DarkThemePreference.ON,
         WELCOME_DIALOG to 1,
         AUDIO_CONVERSION_FORMAT to NOT_SPECIFIED,
         VIDEO_QUALITY to NOT_SPECIFIED,
@@ -388,7 +388,7 @@ object PreferenceUtil {
             AppSettings(
                 DarkThemePreference(
                     darkThemeValue =
-                        kv.decodeInt(DARK_THEME_VALUE, DarkThemePreference.FOLLOW_SYSTEM),
+                        kv.decodeInt(DARK_THEME_VALUE, DarkThemePreference.ON),
                     isHighContrastModeEnabled = kv.decodeBool(HIGH_CONTRAST, false),
                 ),
                 isDynamicColorEnabled =
@@ -458,7 +458,7 @@ object PreferenceUtil {
 }
 
 data class DarkThemePreference(
-    val darkThemeValue: Int = FOLLOW_SYSTEM,
+    val darkThemeValue: Int = ON,
     val isHighContrastModeEnabled: Boolean = false,
 ) {
     companion object {

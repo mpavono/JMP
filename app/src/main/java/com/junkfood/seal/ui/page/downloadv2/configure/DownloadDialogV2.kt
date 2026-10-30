@@ -2,11 +2,14 @@ package com.junkfood.seal.ui.page.downloadv2.configure
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,6 +36,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +45,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -54,6 +60,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.junkfood.seal.App
 import com.junkfood.seal.R
+import com.junkfood.seal.ui.common.AsyncImageImpl
 import com.junkfood.seal.ui.common.HapticFeedback.longPressHapticFeedback
 import com.junkfood.seal.ui.common.motion.materialSharedAxisX
 import com.junkfood.seal.ui.component.OutlinedButtonWithIcon
@@ -80,6 +87,9 @@ import com.junkfood.seal.util.PreferenceUtil.getBoolean
 import com.junkfood.seal.util.PreferenceUtil.updateBoolean
 import com.junkfood.seal.util.ToastUtil
 import com.junkfood.seal.util.UpdateUtil
+import com.junkfood.seal.util.VideoInfo
+import com.junkfood.seal.util.toDurationText
+import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -253,6 +263,7 @@ private fun DownloadDialogContent(
             is Configure -> {
                 check(state.urlList.isNotEmpty())
                 SimpleConfigurePage(
+                    url = state.urlList.singleOrNull(),
                     initialType = config.initialType,
                     onCancel = { onActionPost(Action.HideSheet) },
                     onDownload = { type ->
@@ -429,14 +440,100 @@ private fun DownloadTypeSelectionGroup(
     }
 }
 
+private sealed interface PreviewState {
+    data object Loading : PreviewState
+
+    data class Loaded(val info: VideoInfo) : PreviewState
+
+    data object Unavailable : PreviewState
+}
+
+private fun previewTaskKey(url: String) = "Preview_$url"
+
+/** Small thumbnail with title and uploader/duration of the video behind the link. */
+@Composable
+private fun LinkPreview(modifier: Modifier = Modifier, state: PreviewState) {
+    if (state is PreviewState.Unavailable) return
+
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier =
+                Modifier.width(120.dp)
+                    .aspectRatio(16f / 9f)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (state is PreviewState.Loaded) {
+                AsyncImageImpl(
+                    model = state.info.thumbnail,
+                    contentDescription = null,
+                    modifier = Modifier.matchParentSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+            }
+        }
+
+        if (state is PreviewState.Loaded) {
+            val details =
+                listOfNotNull(state.info.uploader, state.info.duration?.toInt()?.toDurationText())
+                    .joinToString(" • ")
+            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(
+                    text = state.info.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (details.isNotEmpty()) {
+                    Text(
+                        text = details,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 internal fun SimpleConfigurePage(
     modifier: Modifier = Modifier,
+    url: String? = null,
     initialType: DownloadType,
     onCancel: () -> Unit,
     onDownload: (DownloadType) -> Unit,
 ) {
     var selectedType by remember(initialType) { mutableStateOf(initialType) }
+
+    // The preview is only decoration: if fetching the info fails, nothing is shown and the
+    // download itself is unaffected.
+    var preview by
+        remember(url) {
+            mutableStateOf<PreviewState>(
+                if (url == null) PreviewState.Unavailable else PreviewState.Loading
+            )
+        }
+
+    LaunchedEffect(url) {
+        if (url == null) return@LaunchedEffect
+        val result =
+            withContext(Dispatchers.IO) {
+                DownloadUtil.fetchVideoInfoFromUrl(url = url, taskKey = previewTaskKey(url))
+            }
+        preview = result.getOrNull()?.let { PreviewState.Loaded(it) } ?: PreviewState.Unavailable
+    }
+
+    // The fetch is a blocking yt-dlp process: kill it if the sheet closes before it finishes.
+    DisposableEffect(url) {
+        onDispose { if (url != null) YoutubeDL.destroyProcessById(previewTaskKey(url)) }
+    }
 
     Column(modifier = modifier.padding(horizontal = 20.dp)) {
         Header(
@@ -444,6 +541,7 @@ internal fun SimpleConfigurePage(
             title = stringResource(R.string.download_type),
             icon = Icons.Outlined.FileDownload,
         )
+        LinkPreview(modifier = Modifier.padding(bottom = 16.dp), state = preview)
         DownloadTypeSelectionGroup(
             typeEntries = listOf(Video, Audio),
             selectedType = selectedType,

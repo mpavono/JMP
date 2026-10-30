@@ -10,7 +10,9 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Versión fija: 'ubuntu-latest' empezó a migrar a Ubuntu 26 y el paso
+    # Setup Android SDK falló en esa imagen.
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4

@@ -10,8 +10,7 @@ on:
 
 jobs:
   build:
-    # Versión fija: 'ubuntu-latest' empezó a migrar a Ubuntu 26 y el paso
-    # Setup Android SDK falló en esa imagen.
+    # Versión fija de la imagen. Esta imagen ya trae el Android SDK instalado.
     runs-on: ubuntu-24.04
 
     steps:
@@ -24,8 +23,12 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # android-actions/setup-android fallaba aquí y no hace falta: el SDK viene
+      # preinstalado en la imagen. Este paso solo lo muestra para diagnóstico.
+      - name: Show preinstalled Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" "$ANDROID_HOME/build-tools"
 
       - uses: gradle/actions/setup-gradle@v3
 

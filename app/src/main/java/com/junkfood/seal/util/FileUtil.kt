@@ -195,7 +195,7 @@ object FileUtil {
     fun Context.getInternalTempDir() = File(filesDir, "tmp")
 
     internal fun getExternalDownloadDirectory() =
-        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Seal")
+        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "JMP")
             .also { it.mkdir() }
 
     internal fun getExternalPrivateDownloadDirectory() =

@@ -5,6 +5,27 @@ All notable changes (starting from v1.7.3) to stable releases will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [JMP] - 2026-10-31
+
+Modificaciones de **Juan Pavon** sobre Seal v2.0.0 (sin publicar), conforme a la sección 5 de la GPLv3.
+Todo lo que aparece debajo de esta sección es el historial del proyecto original **Seal** (JunkFood02 y colaboradores).
+
+### Cambiado
+
+- Nuevo nombre (**JMP**), ícono, carpeta de descargas (`JMP`) e identificador de la app (`com.mpavono.jmp`).
+- Pantalla de descarga simplificada: solo Video / Audio, Descargar y Cancelar.
+- Tema oscuro por defecto.
+- Al consultar información de un enlace: 3 reintentos y 15 s de espera (antes 1 y 5 s).
+- Los enlaces de versiones, código fuente y actualizaciones apuntan a `mpavono/JMP`.
+- Se quitaron de "Acerca de" los accesos a Telegram, Matrix y patrocinio de Seal.
+
+### Añadido
+
+- Vista previa del enlace (miniatura, título, autor y duración) en la pantalla de descarga.
+- Botón "Actualizar yt-dlp y reintentar" cuando falla la extracción.
+- "Modificado por Juan Pavon" y crédito a Seal en la pantalla "Acerca de".
+- Flujo de GitHub Actions para compilar un APK de depuración.
+
 ## [v2.0.0][2.0.0] - unreleased
 
 ### Notable changes from v1.13

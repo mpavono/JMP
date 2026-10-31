@@ -6,12 +6,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.outlined.UpdateDisabled
-import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,7 +34,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -54,14 +54,13 @@ import com.junkfood.seal.util.AUTO_UPDATE
 import com.junkfood.seal.util.PreferenceUtil
 import com.junkfood.seal.util.ToastUtil
 
-private const val releaseURL = "https://github.com/JunkFood02/Seal/releases"
-private const val repoUrl = "https://github.com/JunkFood02/Seal"
+private const val releaseURL = "https://github.com/mpavono/JMP/releases"
+private const val repoUrl = "https://github.com/mpavono/JMP"
+// Proyecto original del que deriva JMP (GPLv3): se conserva el crédito.
+private const val upstreamRepoUrl = "https://github.com/JunkFood02/Seal"
 const val weblate = "https://hosted.weblate.org/engage/seal/"
 const val YtdlpRepository = "https://github.com/yt-dlp/yt-dlp"
-private const val githubIssueUrl = "https://github.com/JunkFood02/Seal/issues"
-private const val telegramChannelUrl = "https://t.me/seal_app"
-private const val matrixSpaceUrl = "https://matrix.to/#/#seal-space:matrix.org"
-private const val githubSponsor = "https://github.com/sponsors/JunkFood02"
+private const val githubIssueUrl = "https://github.com/mpavono/JMP/issues"
 private const val TAG = "AboutPage"
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,6 +111,24 @@ fun AboutPage(
             LazyColumn(modifier = Modifier.padding(it)) {
                 item {
                     PreferenceItem(
+                        title = stringResource(R.string.modified_by),
+                        description = stringResource(R.string.modified_by_name),
+                        icon = Icons.Outlined.Edit,
+                    ) {
+                        openUrl(repoUrl)
+                    }
+                }
+                item {
+                    PreferenceItem(
+                        title = stringResource(R.string.based_on),
+                        description = stringResource(R.string.based_on_desc),
+                        icon = Icons.Outlined.Code,
+                    ) {
+                        openUrl(upstreamRepoUrl)
+                    }
+                }
+                item {
+                    PreferenceItem(
                         title = stringResource(R.string.readme),
                         description = stringResource(R.string.readme_desc),
                         icon = Icons.Outlined.Description,
@@ -135,34 +152,6 @@ fun AboutPage(
                         icon = Icons.Outlined.ContactSupport,
                     ) { openUrl(githubIssueUrl) }
                 }*/
-                item {
-                    PreferenceItem(
-                        title = stringResource(id = R.string.sponsor),
-                        description = stringResource(id = R.string.sponsor_desc),
-                        icon = Icons.Outlined.VolunteerActivism,
-                    ) {
-                        //                    openUrl(githubSponsor)
-                        onNavigateToDonatePage()
-                    }
-                }
-                item {
-                    PreferenceItem(
-                        title = stringResource(R.string.telegram_channel),
-                        description = telegramChannelUrl,
-                        icon = painterResource(id = R.drawable.icons8_telegram_app),
-                    ) {
-                        openUrl(telegramChannelUrl)
-                    }
-                }
-                item {
-                    PreferenceItem(
-                        title = stringResource(R.string.matrix_space),
-                        description = matrixSpaceUrl,
-                        icon = painterResource(id = R.drawable.icons8_matrix),
-                    ) {
-                        openUrl(matrixSpaceUrl)
-                    }
-                }
                 item {
                     PreferenceItem(
                         title = stringResource(id = R.string.credits),
@@ -223,7 +212,7 @@ fun AutoUpdateUnavailableDialog(onDismissRequest: () -> Unit = {}) {
         val startIndex = text.indexOf(hyperLinkText)
         val endIndex = startIndex + hyperLinkText.length
         addUrlAnnotation(
-            UrlAnnotation("https://github.com/JunkFood02/Seal/releases/latest"),
+            UrlAnnotation("https://github.com/mpavono/JMP/releases/latest"),
             start = startIndex,
             end = endIndex,
         )

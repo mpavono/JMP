@@ -327,6 +327,10 @@
     <string name="prefer_compatibility_desc">Prefieres los formatos MP4(H.264) para compartir con otras aplicaciones</string>
     <string name="refresh_cookies_desc">Pulsa para abrir la página web para generar nuevas cookies:</string>
     <string name="download_type">Tipo de descarga</string>
+    <string name="download_images">Descargar imágenes</string>
+    <string name="images_downloading">Descargando imágenes…</string>
+    <string name="images_done">%1$d archivo(s) guardado(s)</string>
+    <string name="images_failed">No se pudieron descargar las imágenes: %1$s</string>
     <string name="custom">Personalizada</string>
     <string name="auto">Automática</string>
     <string name="unknown">Desconocido</string>

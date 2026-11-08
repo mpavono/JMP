@@ -30,6 +30,19 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME/platforms" "$ANDROID_HOME/build-tools"
 
+      # gallery-dl y sus dependencias (todo Python puro) se empaquetan como asset:
+      # la app los extrae y los ejecuta con el Python embebido.
+      - name: Bundle gallery-dl
+        run: |
+          mkdir -p app/src/main/assets build/gdl
+          pip download --no-deps --only-binary=:all: --platform any --python-version 3.11 \
+            --implementation py --abi none -d build/gdl-wheels \
+            gallery-dl requests urllib3 idna certifi charset-normalizer
+          pip install --no-deps --no-compile --target build/gdl build/gdl-wheels/*.whl
+          rm -rf build/gdl/bin
+          (cd build/gdl && zip -qr ../../app/src/main/assets/gallerydl.zip .)
+          ls -la app/src/main/assets/gallerydl.zip
+
       - uses: gradle/actions/setup-gradle@v3
 
       - name: Grant execute permission for gradlew

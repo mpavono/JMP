@@ -1,5 +1,7 @@
 package com.junkfood.seal.ui.page.downloadv2.configure
 
+import androidx.compose.material3.TextButton
+import com.junkfood.seal.util.GalleryDlUtil
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
@@ -266,6 +268,13 @@ private fun DownloadDialogContent(
                     url = state.urlList.singleOrNull(),
                     initialType = config.initialType,
                     onCancel = { onActionPost(Action.HideSheet) },
+                    onDownloadImages =
+                        state.urlList.singleOrNull()?.let { url ->
+                            {
+                                downloadImages(url)
+                                onActionPost(Action.HideSheet)
+                            }
+                        },
                     onDownload = { type ->
                         Config.updatePreferences(
                             newValue = config.copy(downloadType = type),
@@ -508,6 +517,7 @@ internal fun SimpleConfigurePage(
     url: String? = null,
     initialType: DownloadType,
     onCancel: () -> Unit,
+    onDownloadImages: (() -> Unit)? = null,
     onDownload: (DownloadType) -> Unit,
 ) {
     var selectedType by remember(initialType) { mutableStateOf(initialType) }
@@ -547,8 +557,16 @@ internal fun SimpleConfigurePage(
             selectedType = selectedType,
             onSelect = { selectedType = it },
         )
+        if (onDownloadImages != null) {
+            TextButton(
+                modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
+                onClick = onDownloadImages,
+            ) {
+                Text(text = stringResource(R.string.download_images))
+            }
+        }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -572,6 +590,26 @@ internal fun SimpleConfigurePage(
                     modifier = Modifier.padding(start = 8.dp),
                 )
             }
+        }
+    }
+}
+
+/** Downloads the images of a photo post with gallery-dl, outside the yt-dlp task queue. */
+private fun downloadImages(url: String) {
+    val context = App.context
+    App.applicationScope.launch(Dispatchers.IO) {
+        withContext(Dispatchers.Main) { ToastUtil.makeToast(R.string.images_downloading) }
+        val result = runCatching { GalleryDlUtil.download(context, url) }
+        withContext(Dispatchers.Main) {
+            result
+                .onSuccess {
+                    ToastUtil.makeToast(context.getString(R.string.images_done, it.size))
+                }
+                .onFailure {
+                    ToastUtil.makeToast(
+                        context.getString(R.string.images_failed, it.message?.takeLast(300) ?: "")
+                    )
+                }
         }
     }
 }
